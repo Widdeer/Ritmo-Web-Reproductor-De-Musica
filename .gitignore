@@ -1,0 +1,19 @@
+# Tu biblioteca personal: no se sube a Git
+content/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Sistema / editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+#archivos comprimidos
+*.zip
+
+# Contexto Claude
+CLAUDE.md

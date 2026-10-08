@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ritmo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside id="side">
+  <button class="logo" id="logo" aria-label="Abrir o cerrar menú">
+    <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#ff6a13"/><path d="M9 20v-8M14 24V8M19 21V11M24 18v-4" stroke="#0a0a0a" stroke-width="3" stroke-linecap="round"/></svg>
+    <b>Ritmo</b>
+  </button>
+  <nav aria-label="Principal">
+    <a href="#inicio" data-v="inicio"><i data-i="home"></i><span>Inicio</span></a>
+    <a href="#playlist" data-v="playlist"><i data-i="list"></i><span>Playlist</span></a>
+    <a href="#guardados" data-v="guardados"><i data-i="heart"></i><span>Guardados</span></a>
+    <a href="#descargados" data-v="descargados"><i data-i="down"></i><span>Descargados</span></a>
+  </nav>
+  <div class="foot">
+    <button id="theme" aria-label="Cambiar entre tema claro y oscuro"><i class="tm" data-i="moon"></i><i class="ts" data-i="sun"></i><span>Tema</span></button>
+    <a href="#config" data-v="config"><i data-i="gear"></i><span>Configuración</span></a>
+  </div>
+</aside>
+
+<main>
+  <header>
+    <form id="sf" role="search">
+      <input id="q" type="search" placeholder="¿Qué querés escuchar?" aria-label="Buscar canciones" autocomplete="off">
+      <button class="btn">Buscar</button>
+    </form>
+  </header>
+  <section id="view" aria-live="polite"></section>
+</main>
+
+<div id="bar">
+  <img class="cov" alt="">
+  <div class="np"><b class="np-t">Nada reproduciéndose</b><small class="np-c">Elegí una canción</small></div>
+  <div class="mid">
+    <div class="ctl">
+      <button class="pvb" aria-label="Anterior" data-i="prev"></button>
+      <button class="ppb" aria-label="Reproducir" data-i="play"></button>
+      <button class="nxb" aria-label="Siguiente" data-i="next"></button>
+    </div>
+    <div class="seek"><span class="tc">0:00</span><input class="sk" type="range" min="0" max="100" value="0" step="1" aria-label="Posición"><span class="td">0:00</span></div>
+  </div>
+  <div class="right">
+    <label class="vol"><i data-i="vol"></i><input class="vl" type="range" min="0" max="100" value="80" aria-label="Volumen"></label>
+    <button id="expand" aria-label="Agrandar reproductor" data-i="expand"></button>
+  </div>
+</div>
+
+<section id="full" hidden aria-label="Reproductor ampliado">
+  <div class="fh">
+    <button id="shrink" aria-label="Minimizar reproductor" data-i="chev"></button>
+    <div class="modes" role="group" aria-label="Modo de reproducción">
+      <button data-mode="video" aria-pressed="true">Video</button>
+      <button data-mode="audio" aria-pressed="false">Solo audio</button>
+    </div>
+  </div>
+  <div class="fmain">
+    <div class="stage"><video id="au" playsinline></video><img id="fi" class="cov" alt=""></div>
+    <div class="finfo"><h1 class="np-t"></h1><p class="np-c mut"></p><small id="fnote" class="mut"></small></div>
+  </div>
+  <aside class="queue"><h2>A continuación</h2><ol id="q"></ol></aside>
+</section>
+<dialog id="dlg"></dialog>
+<div id="toast" role="status"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
