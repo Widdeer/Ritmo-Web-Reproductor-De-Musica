@@ -122,10 +122,6 @@ El servidor solo expone `index.html`, `style.css`, `app.js` y la carpeta `conten
 
 Ritmo reproduce **tus propios archivos**. No incluye música ni videos, y el contenido de `content/` no se sube al repositorio. Respetá los derechos de autor de lo que agregues.
 
-## 📄 Licencia
-
-_Pendiente de definir._ Podés agregar un archivo `LICENSE` (por ejemplo MIT) cuando decidas cómo compartir el proyecto.
-
 ---
 
 <div align="center">
