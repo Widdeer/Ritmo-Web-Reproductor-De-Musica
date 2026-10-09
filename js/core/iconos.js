@@ -20,6 +20,7 @@ export const I = {
   pause: S('<path d="M7 4h4v16H7zM13 4h4v16h-4z"/>'),
   next: S('<path d="M5 4l10 8-10 8zM19 5v14"/>'),
   vol: S('<path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>'),
+  close: S('<path d="M6 6l12 12M18 6 6 18"/>'),
   chev: S('<path d="M6 9l6 6 6-6"/>'),
   expand: S('<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>'),
   prev: S('<path d="M19 4 9 12l10 8zM5 5v14"/>')

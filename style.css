@@ -29,7 +29,8 @@ nav{flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
 #theme.spin svg{animation:spin .5s}
 
 /* Contenido */
-main{margin-left:72px;padding:0 32px 190px}
+main{margin-left:72px;padding:0 32px 32px}
+body.con-bar main{padding-bottom:190px}  /* deja lugar para la barra de reproducción solo si está a la vista */
 header{position:sticky;top:0;background:var(--bg);padding:20px 0;z-index:5}
 #sf{display:flex;gap:8px;max-width:640px;margin:auto}
 #sf input{flex:1}
@@ -63,7 +64,8 @@ h2{font-size:20px;margin:28px 0 12px}
 .lnk{color:var(--mut);text-decoration:underline}
 
 /* Reproductor */
-#bar{position:fixed;left:72px;right:0;bottom:0;height:92px;background:var(--surf);border-top:2px solid var(--ok);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);align-items:center;gap:16px;padding:0 24px;z-index:10}
+#bar{position:fixed;left:72px;right:0;bottom:0;height:92px;background:var(--surf);border-top:2px solid var(--ok);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr);align-items:center;gap:16px;padding:0 24px;z-index:10;transition:left .45s cubic-bezier(.2,.8,.2,1)}
+body.ampliado #bar{left:0;z-index:31}  /* con el panel grande, la barra ocupa todo el ancho y queda arriba del menú */
 #bar img{grid-column:1;grid-row:1;justify-self:start}
 .np{grid-column:1;grid-row:1;margin-left:76px}
 .mid{grid-column:2;display:flex;flex-direction:column;align-items:center;gap:4px}
@@ -72,8 +74,8 @@ h2{font-size:20px;margin:28px 0 12px}
 input[type=range]{accent-color:var(--ok);background:none;border:0;padding:0;flex:1;width:100%;cursor:pointer}
 .right{grid-column:3;display:flex;align-items:center;justify-content:flex-end;gap:12px}
 .vol{display:flex;align-items:center;gap:8px;width:min(130px,100%)}
-#expand{padding:8px;border-radius:50%}
-#expand:hover{background:var(--line)}
+#expand,#bar .cerrar{padding:8px;border-radius:50%}
+#expand:hover,#bar .cerrar:hover{background:var(--line)}
 #bar .cov,#bar .np{cursor:pointer}
 #bar img{width:64px;height:64px;object-fit:cover;border-radius:6px;background:var(--line)}
 .cov:not([src]){visibility:hidden}
@@ -89,10 +91,11 @@ dialog::backdrop{background:#0009}
 dialog .btn{display:block;width:100%;margin:8px 0;text-align:left}
 dialog .nl{margin:12px 0}
 dialog .nl .btn{width:auto}
-#toast{position:fixed;left:50%;bottom:104px;transform:translateX(-50%);background:var(--or);color:var(--k);padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--or);color:var(--k);padding:10px 18px;border-radius:999px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
 #toast.on{opacity:1}
+body.con-bar #toast{bottom:104px}  /* sube cuando la barra de reproducción está a la vista */
 
-@media(max-width:700px){main{padding:0 16px 210px}#bar{padding:0 12px;gap:8px;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}.right{display:none}}
+@media(max-width:700px){main{padding:0 16px 32px}body.con-bar main{padding-bottom:210px}#bar{padding:0 12px;gap:8px;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}.right{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
 .tag{position:absolute;left:8px;top:8px;background:var(--ok);color:var(--k);font-size:11px;font-weight:600;padding:2px 10px;border-radius:99px;font-style:normal}
@@ -100,7 +103,10 @@ code{background:var(--surf);padding:2px 6px;border-radius:6px}
 
 [hidden]{display:none!important}
 /* Reproductor ampliado (portada centrada, como YouTube Music) */
-#full{position:fixed;top:0;left:72px;right:0;bottom:92px;z-index:15;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:16px 32px 24px;background:linear-gradient(color-mix(in srgb,var(--tint,#ff6a13) 55%,var(--bg)),var(--bg) 90%)}
+#full{position:fixed;top:0;left:0;right:0;bottom:92px;z-index:30;overflow:auto;display:flex;flex-direction:column;gap:16px;padding:16px 32px 24px;background:linear-gradient(color-mix(in srgb,var(--tint,#ff6a13) 55%,var(--bg)),var(--bg) 90%);
+  /* cerrado: abajo, transparente e invisible (visibility espera a que termine la animación) */
+  transform:translateY(100%);opacity:0;visibility:hidden;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s ease,visibility 0s .45s}
+#full.on{transform:none;opacity:1;visibility:visible;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s ease,visibility 0s}
 .fh{display:flex;align-items:center;justify-content:space-between}
 .fh>button{padding:10px;border-radius:50%}
 .fh>button:hover{background:#ffffff22}

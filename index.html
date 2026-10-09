@@ -38,7 +38,7 @@
   <section id="view" aria-live="polite"></section>
 </main>
 
-<div id="bar">
+<div id="bar" hidden>
   <img class="cov" alt="">
   <div class="np"><b class="np-t">Nada reproduciéndose</b><small class="np-c">Elegí una canción</small></div>
   <div class="mid">
@@ -52,16 +52,18 @@
   <div class="right">
     <label class="vol"><i data-i="vol"></i><input class="vl" type="range" min="0" max="100" value="80" aria-label="Volumen"></label>
     <button id="expand" aria-label="Agrandar reproductor" data-i="expand"></button>
+    <button class="cerrar" aria-label="Cerrar música" title="Cerrar música" data-i="close"></button>
   </div>
 </div>
 
-<section id="full" hidden aria-label="Reproductor ampliado">
+<section id="full" inert aria-label="Reproductor ampliado">
   <div class="fh">
     <button id="shrink" aria-label="Minimizar reproductor" data-i="chev"></button>
     <div class="modes" role="group" aria-label="Modo de reproducción">
       <button data-mode="video" aria-pressed="true">Video</button>
       <button data-mode="audio" aria-pressed="false">Solo audio</button>
     </div>
+    <button class="cerrar" aria-label="Cerrar música" title="Cerrar música" data-i="close"></button>
   </div>
   <div class="fmain">
     <div class="stage"><video id="au" playsinline></video><img id="fi" class="cov" alt=""></div>

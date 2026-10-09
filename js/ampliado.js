@@ -1,7 +1,8 @@
 /* ============================================================
    ampliado.js — el panel grande (portada o video, "A continuación")
-   Se abre desde la barra de abajo y se minimiza con el botón, con Esc
-   y automáticamente al navegar.
+   Se abre solo al tocar una canción (o desde la barra de abajo) y ocupa
+   toda la pantalla, tapando el menú lateral, con una animación de subida.
+   Se minimiza con el botón, con Esc, al navegar o al cerrar la música.
    ============================================================ */
 import { $, $$, esc } from './core/utils.js';
 import { DB, save } from './core/datos.js';
@@ -35,12 +36,20 @@ function renderCola() {
   $('#cola').innerHTML = P.queue.map(id => T[id]).filter(Boolean).map(t => `<li><button data-id="${esc(t.id)}" class="${P.cur && t.id === P.cur.id ? 'on' : ''}"><img src="${esc(t.img)}" alt=""><b>${esc(t.title)}</b><small>${esc(t.ch)}</small></button></li>`).join('');
 }
 
-// Abre (true) o minimiza (false) el panel
+const abierto = () => full.classList.contains('on');
+
+// Abre (true) o minimiza (false) el panel. La animación la hace el CSS (clase "on").
 export const abrir = v => {
-  full.hidden = !v;
+  if (v && !P.cur) return;          // sin canción no hay nada para mostrar
+  if (v === abierto()) return;      // ya está como se pidió
+  const teniaFoco = full.contains(document.activeElement);   // se mira antes de apagar el panel
+  full.classList.toggle('on', v);
+  full.toggleAttribute('inert', !v);   // cerrado: no se puede enfocar ni leer con lector de pantalla
+  document.body.classList.toggle('ampliado', v);   // el CSS esconde el menú y estira la barra de abajo
   document.body.style.overflow = v ? 'hidden' : '';
   $('#expand').innerHTML = I[v ? 'chev' : 'expand'];
-  if (v) $('#shrink').focus();
+  if (v) $('#shrink').focus({ preventScroll: true });
+  else if (teniaFoco) $('#expand').focus();
 };
 
 export function initAmpliado() {
@@ -50,11 +59,14 @@ export function initAmpliado() {
   // Cuando el reproductor cambia de canción, se actualizan modo y cola
   document.addEventListener('ritmo:play', () => { mostrarModo(); renderCola(); });
 
+  // Cuando se cierra la música, el panel se minimiza y se vacía
+  document.addEventListener('ritmo:cerrar', () => { abrir(false); mostrarModo(); renderCola(); });
+
   // Abrir / minimizar
-  $('#expand').onclick = () => P.cur && abrir(full.hidden);
-  $('#bar .cov').onclick = $('#bar .np').onclick = () => P.cur && abrir(true);
+  $('#expand').onclick = () => abrir(!abierto());
+  $('#bar .cov').onclick = $('#bar .np').onclick = () => abrir(true);
   $('#shrink').onclick = () => abrir(false);
-  addEventListener('keydown', e => { if (e.key === 'Escape' && !full.hidden) abrir(false); });
+  addEventListener('keydown', e => { if (e.key === 'Escape' && abierto()) abrir(false); });
 
   // Al navegar (menú lateral, configuración, buscador) el panel se minimiza
   $$('#side a').forEach(a => a.addEventListener('click', () => abrir(false)));

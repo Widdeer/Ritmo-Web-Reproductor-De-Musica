@@ -23,6 +23,12 @@ let drag = false;    // true mientras el usuario arrastra la barra de posición
 // Qué archivo corresponde: el video si estamos en modo video y existe; si no, el audio
 const srcFor = t => (P.mode === 'video' && t.vsrc) ? t.vsrc : t.src;
 
+// Muestra u oculta la barra de abajo (solo se ve si hay una canción cargada)
+function mostrarBarra(v) {
+  $('#bar').hidden = !v;
+  document.body.classList.toggle('con-bar', v);   // el CSS usa esta clase para dejar lugar abajo
+}
+
 // Cambia el ícono play/pausa en todos los botones
 function setPlaying(p) {
   $$('.ppb').forEach(b => { b.innerHTML = I[p ? 'pause' : 'play']; b.setAttribute('aria-label', p ? 'Pausar' : 'Reproducir'); });
@@ -45,10 +51,25 @@ export function play(t, ids) {
   $$('.np-t').forEach(e => e.textContent = t.title); $$('.np-c').forEach(e => e.textContent = t.ch); $$('.cov').forEach(e => e.src = t.img);
   $$('.sk').forEach(e => e.value = 0); $$('.tc').forEach(e => e.textContent = '0:00');
   curSrc = ''; load(t);
+  mostrarBarra(true);
   document.dispatchEvent(new Event('ritmo:play'));   // avisa al panel ampliado (modo y cola)
   const k = clean(t.ch); DB.tastes[k] = (DB.tastes[k] || 0) + 1;       // aprende tus gustos
   DB.recent = [t, ...DB.recent.filter(x => x.id !== t.id)].slice(0, 12);
   save();
+}
+
+// Cierra la música: frena el audio/video, vuelve todo al estado inicial y esconde la barra
+export function cerrar() {
+  if (!P.cur) return;
+  P.cur = null; P.queue = []; curSrc = '';          // primero se borra la canción: así el error de "sin fuente" no avisa nada
+  au.pause(); au.removeAttribute('src'); au.load();   // frena y suelta el archivo
+  $$('.np-t').forEach(e => e.textContent = 'Nada reproduciéndose');
+  $$('.np-c').forEach(e => e.textContent = 'Elegí una canción');
+  $$('.cov').forEach(e => e.removeAttribute('src'));  // sin src, el CSS esconde la portada
+  $$('.sk').forEach(e => e.value = 0);
+  $$('.tc, .td').forEach(e => e.textContent = '0:00');
+  mostrarBarra(false);
+  document.dispatchEvent(new Event('ritmo:cerrar'));  // avisa al panel ampliado para que se minimice
 }
 
 // Pasa a la canción siguiente (d = 1) o anterior (d = -1); da la vuelta al llegar al final
@@ -65,6 +86,7 @@ export function initReproductor() {
   $$('.ppb').forEach(b => b.onclick = () => { if (P.cur) au.paused ? au.play() : au.pause(); });
   $$('.nxb').forEach(b => b.onclick = () => next(1));
   $$('.pvb').forEach(b => b.onclick = () => next(-1));
+  $$('.cerrar').forEach(b => b.onclick = cerrar);   // hay un botón en la barra y otro en el panel grande
 
   au.onplay = () => setPlaying(true);
   au.onpause = () => setPlaying(false);

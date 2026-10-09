@@ -8,6 +8,7 @@ import { $, $$, esc, toast } from './core/utils.js';
 import { DB, save } from './core/datos.js';
 import { T } from './core/biblioteca.js';
 import { play } from './reproductor.js';
+import { abrir } from './ampliado.js';
 
 let renderVista = () => {};   // función del router para redibujar la vista actual
 
@@ -40,7 +41,9 @@ export function initAcciones(render) {
     const c = e.target.closest('.card'); if (!c) return;
     const t = T[c.dataset.id], a = e.target.closest('[data-a]');
     if (a) return a.dataset.a === 'save' ? toggleSave(t, a) : pick(t);
-    // clic en la tarjeta: se reproduce y la cola es el resto de tarjetas del mismo grupo
-    return play(t, $$('.card', c.parentNode).map(x => x.dataset.id));
+    // clic en la tarjeta: se reproduce, la cola es el resto de tarjetas del mismo grupo
+    // y se abre directo el panel grande
+    play(t, $$('.card', c.parentNode).map(x => x.dataset.id));
+    abrir(true);
   });
 }
