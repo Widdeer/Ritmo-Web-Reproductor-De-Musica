@@ -20,6 +20,7 @@ const I = {
   heart: S('<path d="M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z"/>'),
   down: S('<path d="M12 3v12M7 11l5 5 5-5M4 21h16"/>'),
   plus: S('<path d="M12 5v14M5 12h14"/>'),
+  check: S('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
   moon: S('<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'),
   sun: S('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
   gear: S('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>'),
@@ -143,6 +144,8 @@ const grid = l => {
 const row = (h, l) => `<h2>${h}</h2>${grid(l)}`;
 const note = (t, p) => `<div class="note"><h2>${t}</h2><p>${p}</p></div>`;
 const empty = note('No encuentro la biblioteca', 'Iniciá el servidor con <code>python server.py</code> y abrí http://localhost:5000.');
+// cuadrado con un + en el centro para elegir un archivo (formulario "Subir música")
+const up = (name, title, hint, accept) => `<label class="up"><input class="sr" type="file" name="${name}" accept="${accept}"><span class="box">${I.plus}</span><b>${title}</b><small class="mut">${hint}</small><span class="fn mut"></span></label>`;
 const V = {
   inicio() {
     if (!LIB) return empty;
@@ -169,6 +172,20 @@ const V = {
   },
   guardados() { return '<h1>Guardados</h1>' + (DB.saved.length ? grid(DB.saved) : note('Nada guardado todavía', 'Tocá el corazón en cualquier canción.')); },
   descargados() { return '<h1>Descargados</h1>' + note('Las descargas llegan con las cuentas', 'Cuando agregues inicio de sesión, acá van a aparecer las canciones disponibles sin conexión.'); },
+  subir() {
+    return `<h1>Subir música</h1><form class="uf" data-do="upload">
+      <label class="fld">Título de la música <span>Obligatorio</span><input name="title" required maxlength="100" autocomplete="off"></label>
+      <label class="fld">Artista o creador <span>Obligatorio</span><input name="artist" required maxlength="100" autocomplete="off"></label>
+      <div class="ups">
+        ${up('audio', 'Subir audio', 'Obligatorio', 'audio/*,.mp3,.m4a,.wav,.ogg,.opus,.flac,.aac')}
+        ${up('video', 'Subir video', 'Opcional', 'video/*,.mp4,.webm,.mov,.m4v,.ogv')}
+        ${up('cover', 'Subir portada', 'Opcional', 'image/*,.jpg,.jpeg,.png,.webp')}
+      </div>
+      <p id="uerr" class="err" role="alert"></p>
+      <progress id="upr" max="100" value="0" hidden aria-label="Progreso de la subida"></progress>
+      <div><button class="btn">Subir</button></div>
+    </form>`;
+  },
   config() {
     return `<h1>Configuración</h1><h2>Biblioteca</h2><p class="mut">${LIB ? LIB.length + ' archivos encontrados.' : 'Todavía no se generó la biblioteca.'} Guardá tus archivos en <code>content/Musica</code> y <code>content/Video</code> y tocá “Recargar biblioteca”. Si querés una imagen para un tema o video, poné un .jpg o .png con el mismo nombre al lado del archivo.</p><button class="btn" data-do="reload">Recargar biblioteca</button><h2>Tus datos</h2><button class="btn ghost" data-do="clrtaste">Reiniciar mis gustos</button> <button class="btn ghost" data-do="clrall">Borrar todo</button>`;
   }
@@ -202,6 +219,23 @@ function pick(t) {
   };
   dlg.showModal();
 }
+// manda el formulario de "Subir música" al servidor (XMLHttpRequest para poder mostrar el progreso)
+function upload(form) {
+  const err = $('#uerr'), bar = $('#upr'), btn = $('.btn', form);
+  const fail = m => { err.textContent = m; btn.disabled = false; bar.hidden = true; };
+  err.textContent = '';
+  if (!form.elements.audio.files.length) return fail('Elegí un archivo de audio: es obligatorio.');
+  const x = new XMLHttpRequest();
+  x.open('POST', '/api/upload'); x.responseType = 'json';
+  btn.disabled = true; bar.value = 0; bar.hidden = false;
+  x.upload.onprogress = e => { if (e.lengthComputable) bar.value = e.loaded / e.total * 100; };
+  x.onload = async () => {
+    if (x.status !== 200) return fail((x.response && x.response.error) || 'No se pudo subir la canción. Probá de nuevo.');
+    toast('Música subida'); await loadLib(); location.hash = 'inicio';
+  };
+  x.onerror = () => fail('No se pudo conectar con el servidor. ¿Está corriendo python server.py?');
+  x.send(new FormData(form));
+}
 const act = {
   chip: b => b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true'),
   done() {
@@ -222,9 +256,19 @@ view.onclick = e => {
   }
   const b = e.target.closest('[data-do]'); if (b && act[b.dataset.do]) act[b.dataset.do](b);
 };
+// al elegir un archivo en "Subir música": muestra su nombre (y la vista previa si es la portada)
+view.onchange = e => {
+  const f = e.target; if (f.type !== 'file') return;
+  const lab = f.closest('.up'), file = f.files[0], box = $('.box', lab);
+  $('.fn', lab).textContent = file ? file.name : '';
+  lab.classList.toggle('has', !!file);
+  if (f.name === 'cover' && file) box.innerHTML = `<img alt="" src="${URL.createObjectURL(file)}" onload="URL.revokeObjectURL(this.src)">`;
+  else box.innerHTML = file ? I.check : I.plus;
+};
 view.onsubmit = e => {
   e.preventDefault(); const f = e.target.dataset.do;
   if (f === 'newform') { const n = $('#nn').value.trim(); if (n && !DB.lists[n]) { DB.lists[n] = []; save(); render(); } }
+  if (f === 'upload') upload(e.target);
 };
 $('#sf').onsubmit = e => { e.preventDefault(); const q = $('#q').value.trim(); if (q) location.hash = 'buscar/' + encodeURIComponent(q); };
 

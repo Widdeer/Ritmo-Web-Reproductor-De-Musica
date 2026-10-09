@@ -4,8 +4,10 @@ Abrí http://localhost:5000
 Cada carpeta dentro de content/ con un audio (y opcionalmente un video y una imagen)
 es una canción. Si no hay imagen, se usa la portada incrustada en el audio.
 """
+import re
+import shutil
 from pathlib import Path
-from flask import Flask, Response, abort, jsonify, send_from_directory
+from flask import Flask, Response, abort, jsonify, request, send_from_directory
 
 try:
     import mutagen
@@ -20,8 +22,10 @@ IMAGE = {".jpg", ".jpeg", ".png", ".webp"}
 COVER_NAMES = ("cover", "portada", "folder", "front")
 GENERIC = {"content", "Musica", "Video"}
 PUBLIC = {"style.css", "app.js"}  # únicos archivos estáticos que se exponen
+BAD_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # caracteres que Windows no permite en nombres
 
 app = Flask(__name__, static_folder=None)
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 ** 3  # tope de 2 GB por subida
 
 
 def embedded_cover(path):
@@ -92,9 +96,67 @@ def scan():
     return items
 
 
+def safe_name(text):
+    """Limpia un texto para usarlo como nombre de carpeta/archivo (sin /, \\, :, etc.)."""
+    text = BAD_CHARS.sub("", text or "")
+    text = re.sub(r"\s+", " ", text).strip(" .")
+    return text[:100]
+
+
+def error(msg, code=400):
+    return jsonify(error=msg), code
+
+
+@app.errorhandler(413)
+def too_big(_):
+    return error("Los archivos son demasiado grandes (máximo 2 GB en total).", 413)
+
+
 @app.get("/api/library")
 def library():
     return jsonify(scan())
+
+
+@app.post("/api/upload")
+def upload():
+    """Recibe el formulario de 'Subir música' y arma content/Musica/Artista - Título/."""
+    title = safe_name(request.form.get("title"))
+    artist = safe_name(request.form.get("artist")).replace(" - ", " ")  # " - " separa artista y título
+    audio = request.files.get("audio")
+    video = request.files.get("video")
+    cover = request.files.get("cover")
+    has = lambda f: bool(f and f.filename)  # el navegador manda un archivo vacío si no eligieron nada
+
+    if not title:
+        return error("Falta el título de la música.")
+    if not artist:
+        return error("Falta el nombre del artista o creador.")
+    if not has(audio):
+        return error("Falta el archivo de audio.")
+
+    ext = lambda f: Path(f.filename).suffix.lower()
+    if ext(audio) not in AUDIO:
+        return error("El audio tiene que ser: " + ", ".join(sorted(AUDIO)) + ".")
+    if has(video) and ext(video) not in VIDEO:
+        return error("El video tiene que ser: " + ", ".join(sorted(VIDEO)) + ".")
+    if has(cover) and ext(cover) not in IMAGE:
+        return error("La portada tiene que ser: " + ", ".join(sorted(IMAGE)) + ".")
+
+    folder = CONTENT / "Musica" / f"{artist} - {title}"
+    if folder.exists():
+        return error("Ya existe una canción con ese artista y título.", 409)
+
+    try:
+        folder.mkdir(parents=True)
+        audio.save(folder / (title + ext(audio)))
+        if has(video):
+            video.save(folder / (title + ext(video)))
+        if has(cover):
+            cover.save(folder / ("portada" + ext(cover)))
+    except Exception:
+        shutil.rmtree(folder, ignore_errors=True)  # no dejar carpetas a medio crear
+        return error("No se pudo guardar la canción en el servidor.", 500)
+    return jsonify(ok=True, folder=folder.name)
 
 
 @app.get("/api/cover/<path:path>")
@@ -127,4 +189,4 @@ def static_files(name):
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="0.0.0.0", port=5000, debug=False)
