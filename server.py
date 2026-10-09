@@ -21,7 +21,8 @@ VIDEO = {".mp4", ".webm", ".mov", ".m4v", ".ogv"}
 IMAGE = {".jpg", ".jpeg", ".png", ".webp"}
 COVER_NAMES = ("cover", "portada", "folder", "front")
 GENERIC = {"content", "Musica", "Video"}
-PUBLIC = {"style.css", "app.js"}  # únicos archivos estáticos que se exponen
+PUBLIC = {"style.css"}  # archivos sueltos que se exponen
+PUBLIC_DIRS = {"js": {".js"}, "views": {".html"}}  # carpetas expuestas y qué extensiones se permiten
 BAD_CHARS = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # caracteres que Windows no permite en nombres
 
 app = Flask(__name__, static_folder=None)
@@ -183,10 +184,16 @@ def index():
 
 @app.get("/<path:name>")
 def static_files(name):
-    if name not in PUBLIC:
+    ext = Path(name).suffix.lower()
+    carpeta = name.split("/")[0]
+    # lista blanca: archivos sueltos, o archivos .js / .html dentro de js/ y views/ (nada más, ni server.py)
+    permitido = name in PUBLIC or ("/" in name and ext in PUBLIC_DIRS.get(carpeta, ()))
+    if not permitido:
         abort(404)
-    return send_from_directory(ROOT, name, max_age=0)  # sin caché: siempre ves la última versión
+    # tipo explícito para .js: en algunos Windows se detecta mal y los módulos no cargarían
+    mime = "text/javascript" if ext == ".js" else None
+    return send_from_directory(ROOT, name, max_age=0, mimetype=mime)  # sin caché: siempre ves la última versión
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app.run(host="127.0.0.1", port=5000, debug=False)
